@@ -4,6 +4,7 @@ These tests verify that all models can be instantiated, relationships work,
 constraints are enforced, and seed data loads correctly.
 """
 
+from contextlib import suppress
 from datetime import UTC, date, datetime
 
 import pytest
@@ -44,10 +45,8 @@ def engine():
     try:
         yield engine
     finally:
-        try:
+        with suppress(Exception):
             Base.metadata.drop_all(engine)
-        except Exception:
-            pass
         engine.dispose()
 
 
