@@ -51,7 +51,7 @@ class Army(Base, TimestampMixin):
         morale_max: Maximum morale
         supplies_current: Current supplies
         supplies_capacity: Maximum supplies capacity
-        daily_consumption: Supplies consumed per day
+        daily_supply_consumption: Supplies consumed per day
         loot_carried: Amount of loot carried
         noncombatant_count: Number of noncombatants
         noncombatant_percentage: Percentage of noncombatants
@@ -90,7 +90,10 @@ class Army(Base, TimestampMixin):
     morale_max: Mapped[int] = mapped_column(Integer, nullable=False, default=12)
     supplies_current: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     supplies_capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    daily_consumption: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Store in DB column 'daily_consumption' but expose as 'daily_supply_consumption'
+    daily_supply_consumption: Mapped[int] = mapped_column(
+        "daily_consumption", Integer, nullable=False, default=0
+    )
     loot_carried: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     noncombatant_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     noncombatant_percentage: Mapped[float] = mapped_column(nullable=False, default=0.25)
@@ -138,23 +141,24 @@ class Army(Base, TimestampMixin):
     def __repr__(self) -> str:
         return f"<Army(id={self.id}, commander={self.commander_id}, status='{self.status}')>"
 
-    # Compatibility with ARCHITECTURE.md naming while keeping schema stable
-    @property
-    def daily_supply_consumption(self) -> int:
-        """Alias for `daily_consumption` to match documentation terminology."""
-        return int(self.daily_consumption)
-
-    @daily_supply_consumption.setter
-    def daily_supply_consumption(self, value: int) -> None:
-        self.daily_consumption = int(value)
-
     @property
     def is_undersupplied(self) -> bool:
         """Derived flag per rules: insufficient supplies at start of day.
 
-        True if `supplies_current < daily_consumption` or `days_without_supplies > 0`.
+        True if `supplies_current < daily_supply_consumption` or `days_without_supplies > 0`.
         """
-        return (self.supplies_current < self.daily_consumption) or (self.days_without_supplies > 0)
+        return (self.supplies_current < self.daily_supply_consumption) or (
+            self.days_without_supplies > 0
+        )
+
+    # Backwards compatibility for code still using 'daily_consumption'
+    @property
+    def daily_consumption(self) -> int:  # pragma: no cover - compatibility
+        return int(self.daily_supply_consumption)
+
+    @daily_consumption.setter
+    def daily_consumption(self, value: int) -> None:  # pragma: no cover - compatibility
+        self.daily_supply_consumption = int(value)
 
 
 class UnitType(Base, TimestampCreatedMixin):

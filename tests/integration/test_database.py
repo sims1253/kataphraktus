@@ -5,6 +5,7 @@ Uses the main cataphract.db database file for testing.
 """
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -32,8 +33,9 @@ def test_db(project_root):
 
     # Ensure database exists with migrations applied
     if not db_path.exists():
+        # Run migrations using the current interpreter to avoid external wrappers
         result = subprocess.run(
-            ["uv", "run", "alembic", "upgrade", "head"],
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
             check=False,
             cwd=project_root,
             capture_output=True,
@@ -269,7 +271,7 @@ class TestMigrations:
         # Apply migration twice - should not raise error
         for _ in range(2):
             result = subprocess.run(
-                ["uv", "run", "alembic", "upgrade", "head"],
+                [sys.executable, "-m", "alembic", "upgrade", "head"],
                 check=False,
                 cwd=project_root,
                 capture_output=True,

@@ -5,6 +5,7 @@ and utility functions for database operations.
 """
 
 import subprocess
+import sys
 from collections.abc import Generator
 from contextlib import suppress
 from pathlib import Path
@@ -19,7 +20,8 @@ from cataphract.models import Base
 
 
 def _configure_sqlite_wal(
-    dbapi_connection: Any, connection_record: Any  # noqa: ARG001
+    dbapi_connection: Any,
+    connection_record: Any,  # noqa: ARG001
 ) -> None:
     """Configure SQLite to use WAL mode for better concurrency.
 
@@ -55,6 +57,10 @@ def create_db_engine() -> Engine:
             settings.DATABASE_URL,
             echo=settings.DATABASE_ECHO,
             pool_pre_ping=True,
+            connect_args={
+                # Allow usage across threads in TestClient and FastAPI workers
+                "check_same_thread": False,
+            },
         )
         event.listen(engine, "connect", _configure_sqlite_wal)
     else:
@@ -197,7 +203,7 @@ def reset_database() -> None:
 
         # Fresh DB: just upgrade head to create everything
         subprocess.run(
-            ["uv", "run", "alembic", "upgrade", "head"],
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
             check=True,
             cwd=project_root,
         )
@@ -205,12 +211,12 @@ def reset_database() -> None:
 
     # Non-SQLite: use alembic to recreate schema
     subprocess.run(
-        ["uv", "run", "alembic", "downgrade", "base"],
+        [sys.executable, "-m", "alembic", "downgrade", "base"],
         check=True,
         cwd=project_root,
     )
     subprocess.run(
-        ["uv", "run", "alembic", "upgrade", "head"],
+        [sys.executable, "-m", "alembic", "upgrade", "head"],
         check=True,
         cwd=project_root,
     )

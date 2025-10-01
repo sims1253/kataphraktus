@@ -38,10 +38,17 @@ from src.cataphract.models import (
 
 @pytest.fixture
 def engine():
-    """Create an in-memory SQLite engine for testing."""
+    """Create an in-memory SQLite engine for testing and dispose it after use."""
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
-    return engine
+    try:
+        yield engine
+    finally:
+        try:
+            Base.metadata.drop_all(engine)
+        except Exception:
+            pass
+        engine.dispose()
 
 
 @pytest.fixture
@@ -467,7 +474,7 @@ class TestArmyModel:
             morale_max=12,
             supplies_current=1000,
             supplies_capacity=2000,
-            daily_consumption=50,
+            daily_supply_consumption=50,
             status="idle",
         )
         session.add(army)

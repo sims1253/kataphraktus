@@ -3,6 +3,9 @@
 Asynchronous, real-time medieval-fantasy operational wargame focused on logistics,
 communication delays, and command under uncertainty.
 
+Based on [Sam Sorensen's](https://samsorensen.blot.im/) *Cataphract* [ruleset](https://docs.google.com/document/d/1iKPvuuBMyDo4imzIbZiVTIvr_s2XJb7PZzuJ123Tg5Y).
+
+
 ## Features
 
 - Operational command with delayed, fallible communications
@@ -126,22 +129,6 @@ Install a PostgreSQL driver when using Postgres (example using uv):
 uv add psycopg[binary]
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests and linting
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
 ## License
 
 See LICENSE file for details.
-
-## Documentation
-
-For detailed game rules and mechanics, see `CATAPHRACT Ruleset.md`.
-
-For architecture details, see `ARCHITECTURE.md`.
