@@ -1,0 +1,28 @@
+# Label PRs based on changed files
+
+models:
+  - src/cataphract/models/**/*
+
+database:
+  - src/cataphract/database.py
+  - src/cataphract/config.py
+  - alembic/**/*
+
+api:
+  - src/cataphract/main.py
+  - src/cataphract/api/**/*
+
+tests:
+  - tests/**/*
+
+docker:
+  - docker/**/*
+  - Dockerfile
+
+documentation:
+  - '*.md'
+  - docs/**/*
+
+dependencies:
+  - pyproject.toml
+  - uv.lock

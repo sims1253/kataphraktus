@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # Cataphract API Server
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////data/cataphract.db
+      - DATABASE_ECHO=false
+      - DATABASE_POOL_SIZE=5
+      - DATABASE_MAX_OVERFLOW=10
+      - DATABASE_POOL_RECYCLE=1800
+      - DATABASE_POOL_TIMEOUT=30
+    volumes:
+      - cataphract-data:/data
+      - ../src:/app/src  # Hot reload for development
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Redis for WebSocket/session management (future use)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  cataphract-data:
+    driver: local
+  redis-data:
+    driver: local

@@ -1,0 +1,63 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*.pyd
+*.so
+build/
+dist/
+wheels/
+*.egg-info
+.eggs/
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.cover
+.hypothesis/
+
+# Database files
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
+# Type checking
+.mypy_cache/
+.pytype/
+.pyre/
+.ty_cache/
+
+# Ruff
+.ruff_cache/
+
+
+ARCHITECTURE.md
+CATAPHRACT Ruleset.md
+DESIGN_LOG.md
+RULES_IMPLEMENTATION_NOTES.md
+blogs.md
+blogs/
