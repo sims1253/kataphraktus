@@ -1,52 +1,20 @@
-import os
 import sys
 from logging.config import fileConfig
+from pathlib import Path
 
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, Path(__file__).parent.parent.resolve())
 
 # Import all models so alembic can detect them
-from src.cataphract.models import (
-    Army,
-    Base,
-    Battle,
-    Commander,
-    CommanderTrait,
-    CommanderVisibility,
-    CrossingQueue,
-    Detachment,
-    Event,
-    Faction,
-    FactionRelation,
-    Game,
-    Hex,
-    MapFeature,
-    MercenaryCompany,
-    MercenaryContract,
-    Message,
-    MessageLeg,
-    MovementLeg,
-    Operation,
-    Order,
-    OrdersLogEntry,
-    Player,
-    RiverCrossing,
-    RoadEdge,
-    Ship,
-    ShipType,
-    Siege,
-    Stronghold,
-    Trait,
-    UnitType,
-    Weather,
-)
-
 # Import configuration to get database URL from environment
 from src.cataphract.config import get_settings
+from src.cataphract.models import (
+    Base,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -120,9 +88,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

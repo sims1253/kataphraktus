@@ -60,7 +60,6 @@ jobs:
       - name: Run type checker
         run: |
           uv run ty check src/cataphract/
-        continue-on-error: true
 
   test:
     name: Run Tests

@@ -90,7 +90,6 @@ class Army(Base, TimestampMixin):
     morale_max: Mapped[int] = mapped_column(Integer, nullable=False, default=12)
     supplies_current: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     supplies_capacity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    # Store in DB column 'daily_consumption' but expose as 'daily_supply_consumption'
     daily_supply_consumption: Mapped[int] = mapped_column(
         "daily_consumption", Integer, nullable=False, default=0
     )
@@ -150,15 +149,6 @@ class Army(Base, TimestampMixin):
         return (self.supplies_current < self.daily_supply_consumption) or (
             self.days_without_supplies > 0
         )
-
-    # Backwards compatibility for code still using 'daily_consumption'
-    @property
-    def daily_consumption(self) -> int:  # pragma: no cover - compatibility
-        return int(self.daily_supply_consumption)
-
-    @daily_consumption.setter
-    def daily_consumption(self, value: int) -> None:  # pragma: no cover - compatibility
-        self.daily_supply_consumption = int(value)
 
 
 class UnitType(Base, TimestampCreatedMixin):

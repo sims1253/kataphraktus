@@ -55,8 +55,10 @@ def session(engine):
     """Create a new database session for a test."""
     Session = sessionmaker(bind=engine)  # noqa: N806
     session = Session()
-    yield session
-    session.close()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 @pytest.fixture

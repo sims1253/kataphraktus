@@ -6,15 +6,6 @@ communication delays, and command under uncertainty.
 Based on [Sam Sorensen's](https://samsorensen.blot.im/) *Cataphract* [ruleset](https://docs.google.com/document/d/1iKPvuuBMyDo4imzIbZiVTIvr_s2XJb7PZzuJ123Tg5Y).
 
 
-## Features
-
-- Operational command with delayed, fallible communications
-- Logistics-first gameplay (foraging, supply, column length, harrying)
-- Simple resolution mechanics with deterministic RNG + audit trail
-- Roads-as-graph movement and river crossing constraints
-- FastAPI backend, SQLAlchemy ORM, Alembic migrations
-- Extensive tests including property-based tests
-
 ## Quick Start
 
 ### Prerequisites
@@ -27,7 +18,7 @@ Based on [Sam Sorensen's](https://samsorensen.blot.im/) *Cataphract* [ruleset](h
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/cataphract.git
+git clone https://github.com/sims1253/cataphract.git
 cd cataphract
 
 # Install dependencies
@@ -113,7 +104,7 @@ cataphract/
 
 ## Using PostgreSQL (Optional)
 
-Set `DATABASE_URL` to a PostgreSQL DSN and the app will use production-grade pooling:
+Set `DATABASE_URL` to a PostgreSQL DSN and the app will use pooling:
 
 ```bash
 export DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/cataphract

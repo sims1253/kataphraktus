@@ -249,3 +249,33 @@ def hexes_in_range(center: HexCoord, n: int) -> list[HexCoord]:
                 hexes.append(hex_coord)
 
     return hexes
+
+
+def get_ring(center: HexCoord, radius: int) -> list[HexCoord]:
+    """Get hexes that form a ring at the specified radius from the center.
+
+    A ring of radius N includes all hexes that are exactly N steps away from the center.
+    Ring 0 is just the center hex itself.
+
+    Args:
+        center: Center hex coordinate
+        radius: Distance from center (0 for center hex, 1 for immediate neighbors, etc.)
+
+    Returns:
+        List of hex coordinates forming the ring
+    """
+    if radius < 0:
+        return []
+
+    if radius == 0:
+        return [center]
+
+    # Check all hexes in a bounding box around the center at the exact radius
+    result = []
+    for q in range(center.q - radius, center.q + radius + 1):
+        for r in range(center.r - radius, center.r + radius + 1):
+            hex_coord = HexCoord(q=q, r=r)
+            # Convert to cube for accurate distance calculation
+            if hex_distance(center, hex_coord) == radius:
+                result.append(hex_coord)
+    return result
