@@ -24,14 +24,12 @@ class VisibilityService:
     def calculate_scouting_radius(
         self,
         commander: Commander,
-        hex_terrain: str = "flatland",  # noqa: ARG002
         weather: str = "clear",
     ) -> int:
         """Calculate the scouting radius for a commander based on army composition and conditions.
 
         Args:
             commander: The commander whose army determines visibility
-            hex_terrain: Terrain type (for possible special rules)
             weather: Current weather (affects visibility)
 
         Returns:
@@ -44,14 +42,11 @@ class VisibilityService:
         army = commander.armies[0]  # Use first army
         return self.get_scouting_range_for_army(army, weather)
 
-    def get_visible_hexes(
-        self, commander: Commander, hex_terrain: str = "flatland", weather: str = "clear"
-    ) -> list[Hex]:
+    def get_visible_hexes(self, commander: Commander, weather: str = "clear") -> list[Hex]:
         """Get all hexes visible to a commander based on their army's scouting radius.
 
         Args:
             commander: The commander whose visibility to calculate
-            hex_terrain: Current terrain (for possible special rules)
             weather: Current weather affecting visibility
 
         Returns:
@@ -66,7 +61,7 @@ class VisibilityService:
             return []
 
         # Calculate scouting radius
-        radius = self.calculate_scouting_radius(commander, hex_terrain, weather)
+        radius = self.calculate_scouting_radius(commander, weather)
 
         # If radius is 0, only return the current hex
         if radius <= 0:
@@ -94,20 +89,17 @@ class VisibilityService:
 
         return visible_hexes
 
-    def get_visible_armies(
-        self, commander: Commander, hex_terrain: str = "flatland", weather: str = "clear"
-    ) -> list[Army]:
+    def get_visible_armies(self, commander: Commander, weather: str = "clear") -> list[Army]:
         """Get all armies visible to a commander based on their scouting radius.
 
         Args:
             commander: The commander whose visibility to calculate
-            hex_terrain: Current terrain (for possible special rules)
             weather: Current weather affecting visibility
 
         Returns:
             List of visible armies
         """
-        visible_hexes = self.get_visible_hexes(commander, hex_terrain, weather)
+        visible_hexes = self.get_visible_hexes(commander, weather)
         visible_hex_ids = [h.id for h in visible_hexes]
 
         # Find all armies in visible hexes
@@ -164,7 +156,6 @@ class VisibilityService:
         self,
         hex_id: int,
         commander: Commander,
-        hex_terrain: str = "flatland",
         weather: str = "clear",
     ) -> bool:
         """Check if a specific hex is visible to a commander.
@@ -172,13 +163,12 @@ class VisibilityService:
         Args:
             hex_id: ID of the hex to check
             commander: The commander to check visibility for
-            hex_terrain: Current terrain (for possible special rules)
             weather: Current weather affecting visibility
 
         Returns:
             True if hex is visible, False otherwise
         """
-        visible_hexes = self.get_visible_hexes(commander, hex_terrain, weather)
+        visible_hexes = self.get_visible_hexes(commander, weather)
         visible_hex_ids = [h.id for h in visible_hexes]
         return hex_id in visible_hex_ids
 

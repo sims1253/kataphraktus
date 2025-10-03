@@ -6,15 +6,15 @@ attack enemy armies within scouting range.
 
 from sqlalchemy.orm import Session
 
-from cataphract.interfaces import IVisibilityService
 from cataphract.models import Army, Detachment
+from cataphract.services.visibility_service import VisibilityService
 from cataphract.utils.rng import generate_seed, roll_dice
 
 
 class HarryingService:
     """Service for handling harrying mechanics in Cataphract."""
 
-    def __init__(self, session: Session, visibility: IVisibilityService):
+    def __init__(self, session: Session, visibility: VisibilityService):
         self.session = session
         self.visibility = visibility
 

@@ -1,11 +1,6 @@
 """Service layer for Cataphract game logic.
 
 This module provides the service layer implementation for the Cataphract wargame.
-All services use protocol-based dependency inversion for clean architecture:
-
-- Services depend on Protocol interfaces (IVisibilityService, IBattleService, etc.)
-- Use factory.py for production dependency wiring
-- Inject protocol-based fakes for testing (avoid complex mocking)
 
 Architecture:
     - ArmyService: Army lifecycle, raising, disbanding, detachment management
@@ -17,21 +12,23 @@ Architecture:
     - SupplyService: Supply logistics, foraging, torching
     - VisibilityService: Fog of war, scouting, visibility calculations
 
-Production Usage:
-    from cataphract.factory import create_supply_service
-    supply = create_supply_service(session)
-    result = supply.forage(army, target_hexes)
-
-Testing Usage:
+Usage:
     from cataphract.services.supply_service import SupplyService
-    from cataphract.interfaces import IVisibilityService
+    from cataphract.services.visibility_service import VisibilityService
+
+    visibility = VisibilityService(session)
+    supply = SupplyService(session, visibility)
+    result = supply.forage(params)
+
+Testing:
+    from cataphract.services.supply_service import SupplyService
 
     class FakeVisibility:
         def get_visible_armies(self, commander, **kwargs):
             return [test_army]
 
     service = SupplyService(session, FakeVisibility())
-    result = service.forage(army, target_hexes)
+    result = service.forage(params)
 """
 
 from cataphract.services.battle_service import BattleService

@@ -6,15 +6,16 @@ mechanics according to the Cataphract rules.
 
 from sqlalchemy.orm import Session
 
-from cataphract.interfaces import IBattleService, IMoraleService
 from cataphract.models import Army, Siege, Stronghold
+from cataphract.services.battle_service import BattleService
+from cataphract.services.morale_service import MoraleService
 from cataphract.utils.rng import generate_seed, roll_dice
 
 
 class SiegeService:
     """Service for handling siege and assault mechanics in Cataphract."""
 
-    def __init__(self, session: Session, battle: IBattleService, morale: IMoraleService):
+    def __init__(self, session: Session, battle: BattleService, morale: MoraleService):
         self.session = session
         self.battle = battle
         self.morale = morale

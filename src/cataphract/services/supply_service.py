@@ -13,8 +13,8 @@ from cataphract.domain.morale_data import (
     TorchResult,
 )
 from cataphract.domain.supply import detachment_has_ability
-from cataphract.interfaces import IVisibilityService
 from cataphract.models import Army, Hex
+from cataphract.services.visibility_service import VisibilityService
 from cataphract.utils.hex_math import HexCoord, hex_distance, hexes_in_range
 from cataphract.utils.rng import generate_seed, roll_dice
 
@@ -33,7 +33,7 @@ SCOUTING_RANGE_REDUCTION_BAD_WEATHER = 2  # hex reduction for bad weather
 class SupplyService:
     """Service for handling supply logistics in Cataphract."""
 
-    def __init__(self, session: Session, visibility: IVisibilityService):
+    def __init__(self, session: Session, visibility: VisibilityService):
         self.session = session
         self.visibility = visibility
 

@@ -1,21 +1,9 @@
-"""Protocol-based interfaces for Cataphract services.
+"""Interfaces package (deprecated).
 
-This module exports all service protocol interfaces, providing a clear contract
-for service implementations and enabling dependency injection and testing.
+This package previously contained Protocol-based interfaces for services.
+Simplified to use concrete service classes directly for easier understanding
+and maintenance in a small game project.
+
+For service usage, import directly from cataphract.services:
+    from cataphract.services import SupplyService, VisibilityService
 """
-
-from cataphract.interfaces.battle import IBattleService
-from cataphract.interfaces.morale import IMoraleService
-from cataphract.interfaces.movement import IMovementService
-from cataphract.interfaces.siege import ISiegeService
-from cataphract.interfaces.supply import ISupplyService
-from cataphract.interfaces.visibility import IVisibilityService
-
-__all__ = [
-    "IBattleService",
-    "IMoraleService",
-    "IMovementService",
-    "ISiegeService",
-    "ISupplyService",
-    "IVisibilityService",
-]

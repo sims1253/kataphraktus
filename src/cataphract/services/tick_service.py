@@ -17,8 +17,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from cataphract.interfaces import ISupplyService
 from cataphract.models import Army, Battle, Event, Game, Message, Order, Weather
+from cataphract.services.supply_service import SupplyService
+from cataphract.services.visibility_service import VisibilityService
 from cataphract.utils import rng
 
 # Constants for sick/exhausted calculations
@@ -73,9 +74,8 @@ def advance_tick(game_id: int, session: Session) -> dict[str, Any]:
 
     # Phase 5: End-of-Day Processing (at morning for previous day)
     if game.current_day_part == "morning":
-        from cataphract.factory import create_supply_service  # noqa: PLC0415
-
-        supply = create_supply_service(session)
+        visibility = VisibilityService(session)
+        supply = SupplyService(session, visibility)
         _consume_supplies(game_id, game.current_day - 1, session, supply)
 
     session.commit()
@@ -339,7 +339,7 @@ def _resolve_battles(game_id: int, day: int, part: str, session: Session) -> int
     return battles_count
 
 
-def _consume_supplies(game_id: int, day: int, session: Session, supply: ISupplyService) -> None:
+def _consume_supplies(game_id: int, day: int, session: Session, supply) -> None:  # type: ignore[no-untyped-def]
     """Consume supplies for all armies at end of day (night)."""
     armies = session.execute(select(Army).where(Army.game_id == game_id)).scalars().all()
 
