@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+from pathlib import Path
+from typing import Any
 
 from cataphract.config import Settings, get_settings
 from cataphract.domain import models as dm
@@ -14,6 +17,7 @@ from cataphract.domain.enums import DayPart, OrderStatus, Season
 from cataphract.domain.rules_config import DEFAULT_RULES, RulesConfig
 from cataphract.domain.tick import run_daily_tick
 from cataphract.repository import JsonCampaignRepository
+from cataphract import savegame
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +38,14 @@ class OrderDraft:
 class CampaignService:
     """Utilities for loading and mutating campaign aggregates."""
 
-    def __init__(self, repository: JsonCampaignRepository) -> None:
+    def __init__(
+        self,
+        repository: JsonCampaignRepository,
+        *,
+        scenario_dir: Path | None = None,
+    ) -> None:
         self._repository = repository
+        self._scenario_dir = scenario_dir
 
     def list_campaigns(self) -> list[dm.Campaign]:
         """Return every persisted campaign ordered by identifier."""
@@ -93,6 +103,83 @@ class CampaignService:
             return dm.OrderID(1)
         last = max(campaign.orders.keys(), key=int)
         return dm.OrderID(int(last) + 1)
+
+    def import_from_manifest(
+        self,
+        manifest: savegame.SaveManifest,
+        *,
+        assign_new_id: bool = True,
+    ) -> dm.Campaign:
+        """Persist a campaign described by a savegame manifest."""
+
+        if assign_new_id:
+            next_id = self._next_identifier()
+            campaign = savegame.import_campaign_from_manifest(
+                manifest, assign_new_id=True, next_id=int(next_id)
+            )
+            campaign.id = next_id
+        else:
+            campaign = manifest.campaign
+        self._repository.save(campaign)
+        return campaign
+
+    def import_from_file(
+        self, manifest_path: Path | str, *, assign_new_id: bool = True
+    ) -> dm.Campaign:
+        """Load a `.cataphract` archive and persist the contained campaign."""
+
+        manifest = savegame.load_manifest(manifest_path)
+        return self.import_from_manifest(manifest, assign_new_id=assign_new_id)
+
+    def list_scenarios(self) -> list[dict[str, object]]:
+        """Enumerate available scenario manifests."""
+
+        if self._scenario_dir is None:
+            return []
+        summaries: list[dict[str, object]] = []
+        for path in sorted(self._scenario_dir.glob("*.cataphract")):
+            try:
+                manifest = savegame.load_manifest(path)
+            except (FileNotFoundError, json.JSONDecodeError):  # pragma: no cover - invalid archive
+                continue
+            summaries.append(
+                {
+                    "slug": path.name,
+                    "kind": manifest.kind,
+                    "metadata": manifest.metadata.model_dump(),
+                }
+            )
+        return summaries
+
+    def import_scenario(self, slug: str, *, assign_new_id: bool = True) -> dm.Campaign:
+        """Load a scenario archive from the configured directory."""
+
+        if self._scenario_dir is None:
+            raise FileNotFoundError("Scenario directory not configured")
+        manifest_path = self._scenario_dir / slug
+        if not manifest_path.exists():
+            raise FileNotFoundError(f"Scenario '{slug}' not found")
+        return self.import_from_file(manifest_path, assign_new_id=assign_new_id)
+
+    def export_campaign(
+        self,
+        campaign_id: dm.CampaignID,
+        *,
+        kind: savegame.SaveKind = savegame.SaveKind.SAVE,
+        metadata: savegame.SaveMetadata | None = None,
+        players: list[savegame.SavePlayer] | None = None,
+        rules_overrides: dict[str, Any] | None = None,
+    ) -> savegame.SaveManifest:
+        """Produce a save manifest for the requested campaign."""
+
+        campaign = self.get_campaign(campaign_id)
+        return savegame.export_campaign(
+            campaign,
+            kind=kind,
+            metadata=metadata,
+            players=players,
+            rules_overrides=rules_overrides,
+        )
 
     @staticmethod
     def pending_orders(campaign: dm.Campaign) -> list[dm.Order]:
@@ -424,7 +511,10 @@ class ApiState:
         self.settings = settings or get_settings()
         self.repository = JsonCampaignRepository(self.settings.data_dir)
         self.rules = rules
-        self.campaigns = CampaignService(self.repository)
+        self.campaigns = CampaignService(
+            self.repository,
+            scenario_dir=self.settings.scenarios_dir,
+        )
         self.ticks = TickManager(
             self.repository,
             rules=rules,

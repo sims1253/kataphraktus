@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -105,6 +105,19 @@ class OrderCreateRequest(BaseModel):
     execute_day: int | None = None
     execute_part: DayPart | None = None
     priority: int = 0
+
+
+class ScenarioSummary(BaseModel):
+    slug: str
+    kind: str
+    name: str
+    description: str | None
+    author: str | None
+    created_at: datetime
+
+
+class ScenarioImportRequest(BaseModel):
+    slug: str
 
 
 @router.get("/health")
@@ -276,6 +289,43 @@ async def create_order(
         ) from exc
 
     return OrderSummary.model_validate(state.campaigns.to_order_dict(order))
+
+
+@router.get("/scenarios", response_model=list[ScenarioSummary])
+async def list_scenarios(state: ApiStateDep) -> list[ScenarioSummary]:
+    result: list[ScenarioSummary] = []
+    for item in state.campaigns.list_scenarios():
+        metadata = item.get("metadata", {})
+        created_at = metadata.get("created_at")
+        created = (
+            datetime.fromisoformat(created_at)
+            if isinstance(created_at, str)
+            else datetime.now()
+        )
+        result.append(
+            ScenarioSummary(
+                slug=item["slug"],
+                kind=str(item["kind"]),
+                name=metadata.get("name", item["slug"]),
+                description=metadata.get("description"),
+                author=metadata.get("author"),
+                created_at=created,
+            )
+        )
+    return result
+
+
+@router.post("/scenarios/import", response_model=CampaignSummary, status_code=status.HTTP_201_CREATED)
+async def import_scenario(
+    request: ScenarioImportRequest,
+    state: ApiStateDep,
+) -> CampaignSummary:
+    try:
+        campaign = state.campaigns.import_scenario(request.slug)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+    return CampaignSummary.model_validate(state.campaigns.to_summary_dict(campaign))
 
 
 @router.post(

@@ -6,6 +6,7 @@ from datetime import date
 
 import pytest
 
+from cataphract import savegame
 from cataphract.api.runtime import CampaignService, OrderDraft, TickManager
 from cataphract.domain import models as dm
 from cataphract.domain.enums import ArmyStatus, DayPart, OrderStatus, Season
@@ -24,9 +25,68 @@ def _campaign(campaign_id: int = 1) -> dm.Campaign:
     )
 
 
+def _template_campaign() -> dm.Campaign:
+    campaign = _campaign()
+    campaign.name = "Template"
+
+    hex_main = dm.Hex(
+        id=dm.HexID(1),
+        campaign_id=campaign.id,
+        q=0,
+        r=0,
+        terrain="flatland",
+        settlement=40,
+        controlling_faction_id=dm.FactionID(1),
+    )
+    campaign.map.hexes[hex_main.id] = hex_main
+
+    faction = dm.Faction(
+        id=dm.FactionID(1),
+        campaign_id=campaign.id,
+        name="Imperials",
+        color="#AA0000",
+    )
+    campaign.factions[faction.id] = faction
+
+    commander = dm.Commander(
+        id=dm.CommanderID(1),
+        campaign_id=campaign.id,
+        name="Marcus",
+        faction_id=faction.id,
+        age=37,
+        current_hex_id=hex_main.id,
+    )
+    campaign.commanders[commander.id] = commander
+
+    unit_type = dm.UnitType(
+        id=dm.UnitTypeID(1),
+        name="Legion",
+        category="infantry",
+        battle_multiplier=1.0,
+        supply_cost_per_day=4,
+        can_travel_offroad=True,
+    )
+    campaign.unit_types[unit_type.id] = unit_type
+
+    detachment = dm.Detachment(id=dm.DetachmentID(1), unit_type_id=unit_type.id, soldiers=400)
+    army = dm.Army(
+        id=dm.ArmyID(1),
+        campaign_id=campaign.id,
+        commander_id=commander.id,
+        current_hex_id=hex_main.id,
+        detachments=[detachment],
+        status=ArmyStatus.IDLE,
+        supplies_current=160,
+        supplies_capacity=320,
+        daily_supply_consumption=16,
+    )
+    campaign.armies[army.id] = army
+    return campaign
+
+
 def test_campaign_service_create_and_list(tmp_path):
     repo = JsonCampaignRepository(tmp_path)
-    service = CampaignService(repo)
+    service = CampaignService(repo, scenario_dir=tmp_path)
 
     campaign_a = service.create_campaign(name="Alpha", start_date=date(1325, 1, 1))
     campaign_b = service.create_campaign(name="Beta", start_date=date(1325, 1, 2))
@@ -139,3 +199,26 @@ async def test_campaign_service_create_and_cancel_order(tmp_path):
     assert cancelled.status == OrderStatus.CANCELLED
     refreshed = repo.load(campaign.id)
     assert refreshed.armies[army.id].orders_queue == []
+
+
+def test_campaign_service_import_template(tmp_path):
+    repo = JsonCampaignRepository(tmp_path)
+    service = CampaignService(repo)
+
+    template = _template_campaign()
+    manifest = savegame.export_campaign(
+        template,
+        kind=savegame.SaveKind.TEMPLATE,
+        metadata=savegame.SaveMetadata(name="Template Scenario"),
+        players=[savegame.SavePlayer(id=1, name="Admin", role=savegame.PlayerRole.ADMIN)],
+    )
+    archive = tmp_path / "scenario.cataphract"
+    savegame.save_manifest(manifest, archive)
+
+    imported = service.import_scenario(archive.name)
+    stored = repo.load(imported.id)
+    assert stored == imported
+    assert imported.name == "Template"
+    assert imported.map.hexes
+    scenarios = service.list_scenarios()
+    assert any(item["slug"] == archive.name for item in scenarios)

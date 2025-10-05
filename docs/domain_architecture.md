@@ -24,6 +24,9 @@ domain-first layer under `src/cataphract/domain`, which provides:
    (`domain.messaging`, `domain.mercenaries`, `domain.naval`, `domain.operations`)
    implement courier delivery, contract upkeep, embarkation/movement and
    espionage resolution on the in-memory models.
+5. **Savegame Format**: Scenario and save import/export is handled via
+   `savegame`, which persists entire campaigns as `.cataphract` archives. See
+   `docs/savegame_format.md` for details.
 
 ## Next Steps
 
@@ -35,6 +38,7 @@ domain-first layer under `src/cataphract/domain`, which provides:
    - Expand naval conflict (blockades, interception) and riverine logistics
    - Mercenary recruitment workflows and detachment tagging
    - Deeper espionage outcomes and cascading narrative events
+   - Build out the savegame tooling with delta exports and richer metadata
 
 3. **Interface Layer**
    - Once the rules are complete, expose them through a lightweight API or CLI

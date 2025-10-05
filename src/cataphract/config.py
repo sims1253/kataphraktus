@@ -30,6 +30,10 @@ class Settings(BaseSettings):
         default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"],
         description="Origins allowed to call the HTTP API",
     )
+    scenarios_dir: Path = Field(
+        default=Path("scenarios"),
+        description="Directory containing scenario templates (.cataphract archives)",
+    )
 
 
 @lru_cache
@@ -38,4 +42,5 @@ def get_settings() -> Settings:
 
     settings = Settings()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
+    settings.scenarios_dir.mkdir(parents=True, exist_ok=True)
     return settings
