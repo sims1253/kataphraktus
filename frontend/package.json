@@ -1,0 +1,33 @@
+{
+  "name": "cataphract-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo 'No lint configured'",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:docker": "PLAYWRIGHT_BACKEND=docker CATAPHRACT_API_URL=http://127.0.0.1:8000 npx playwright test"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.7",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.2",
+    "@playwright/test": "^1.48.2",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.10"
+  }
+}

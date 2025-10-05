@@ -1,0 +1,20 @@
+.filterRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.parameters pre {
+  font-size: 0.85rem;
+  max-height: 160px;
+  overflow: auto;
+  background: rgba(255, 248, 235, 0.8);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.resultRow td {
+  background: rgba(247, 233, 200, 0.6);
+  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+}

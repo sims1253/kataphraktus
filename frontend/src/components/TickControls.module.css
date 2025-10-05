@@ -1,0 +1,28 @@
+.advanceForm {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.advanceForm label {
+  flex: 1 1 140px;
+}
+
+.scheduleForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.toggleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+}
+
+.scheduleFooter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

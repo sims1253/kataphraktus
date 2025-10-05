@@ -1,0 +1,72 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.row > * {
+  flex: 1 1 200px;
+}
+
+.description {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+}
+
+.legs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.legRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 244, 227, 0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.checkGroup {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.checkGroup label {
+  font-size: 0.95rem;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.checkboxRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.removeLeg {
+  justify-self: flex-start;
+}
+
+.error {
+  color: var(--accent-ruby);
+  font-size: 1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}

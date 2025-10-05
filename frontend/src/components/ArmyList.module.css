@@ -1,0 +1,74 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.2rem;
+}
+
+.card {
+  background: linear-gradient(140deg, rgba(255, 250, 239, 0.92), rgba(240, 224, 199, 0.82));
+  border: 1px solid rgba(23, 18, 25, 0.25);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.16);
+}
+
+.selected {
+  border-color: var(--accent-amber);
+  box-shadow: 0 14px 30px rgba(217, 164, 65, 0.24);
+}
+
+.card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card header h3 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+
+.card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 1rem;
+}
+
+.card footer {
+  margin-top: auto;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.status-forced_march,
+.status-night_march,
+.status-marching {
+  border-left: 6px solid rgba(46, 94, 168, 0.7);
+}
+
+.status-resting {
+  border-left: 6px solid rgba(214, 173, 73, 0.7);
+}
+
+.status-besieging {
+  border-left: 6px solid rgba(150, 60, 60, 0.7);
+}
+
+.status-routed {
+  border-left: 6px solid rgba(160, 50, 50, 0.85);
+}
+
+.status-idle {
+  border-left: 6px solid rgba(56, 120, 88, 0.7);
+}
