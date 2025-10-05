@@ -1,0 +1,30 @@
+{
+  "id": 1,
+  "name": "test",
+  "start_date": "2025-10-05",
+  "current_day": 5,
+  "current_part": "morning",
+  "season": "spring",
+  "status": "active",
+  "map": {
+    "hexes": {},
+    "roads": [],
+    "river_crossings": []
+  },
+  "factions": {},
+  "commanders": {},
+  "armies": {},
+  "strongholds": {},
+  "ships": {},
+  "unit_types": {},
+  "sieges": {},
+  "battles": {},
+  "mercenary_companies": {},
+  "mercenary_contracts": {},
+  "operations": {},
+  "orders": {},
+  "messages": {},
+  "events": [],
+  "weather": {},
+  "recruitments": {}
+}

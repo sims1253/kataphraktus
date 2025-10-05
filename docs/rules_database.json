@@ -1,0 +1,707 @@
+{
+  "map": {
+    "code_location": "src/cataphract/domain/rules_config.py",
+    "hex_size_miles": 6,
+    "hex_side_miles": 3,
+    "hex_area_sq_miles": 23,
+    "settlement": {
+      "min": 20,
+      "max": 100,
+      "increment": 20
+    }
+  },
+  "army": {
+    "code_location": "src/cataphract/domain/models.py",
+    "minimum_soldiers": 100,
+    "default_noncombatant_ratio": 0.25
+  },
+  "recruitment": {
+    "code_location": "src/cataphract/domain/recruitment.py",
+    "duration_days": 30,
+    "formulas": {
+      "infantry_per_hex": "settlement",
+      "cavalry_per_hex": "settlement * 0.25",
+      "wagons_per_hex": "settlement * 0.05"
+    },
+    "revolt": {
+      "chance_base": "1-in-6",
+      "chance_recently_conquered": "2-in-6",
+      "army_size_dice": "1d20",
+      "army_size_multiplier": 500,
+      "army_composition": "infantry_only"
+    }
+  },
+  "supply": {
+    "code_location": "src/cataphract/domain/supply.py",
+    "consumption_per_day": {
+      "infantry": 1,
+      "noncombatant": 1,
+      "cavalry": 10,
+      "wagon": 10
+    },
+    "carry_capacity": {
+      "infantry": 15,
+      "noncombatant": 15,
+      "cavalry": 75,
+      "wagon": 1000
+    },
+    "foraging": {
+      "duration_days": 1,
+      "supplies_per_hex": "settlement * 500",
+      "max_forage_count": 5,
+      "reset_season": "spring",
+      "revolt_chance_base": "2-in-6",
+      "revolt_chance_unfriendly": "3-in-6",
+      "revolt_army_size_dice": "1d20",
+      "revolt_army_size_multiplier": 500,
+      "cavalry_range_hexes": 2
+    },
+    "torching": {
+      "duration_days": 1,
+      "prevents_foraging_until": "spring",
+      "revolt_chance_base": "1-in-6",
+      "revolt_chance_hostile": "2-in-6",
+      "revolt_army_size_dice": "1d20",
+      "revolt_army_size_multiplier": 500,
+      "cavalry_range_hexes": 2
+    },
+    "starvation": {
+      "morale_loss_per_day": 1,
+      "dissolution_days": 14
+    }
+  },
+  "detachments": {
+    "code_location": "src/cataphract/domain/models.py",
+    "size": {
+      "infantry_min": 500,
+      "infantry_max": 1000,
+      "cavalry_min": 200,
+      "cavalry_max": 500
+    },
+    "special_types": {
+      "skirmishers": {
+        "counts_as_cavalry_for": ["scouting", "foraging", "fording"],
+        "ignore_rough_terrain": true,
+        "offroad_full_speed": true,
+        "noncombatant_ratio": 0.10
+      },
+      "heavy_infantry": {
+        "numerical_advantage_multiplier": 2
+      },
+      "heavy_cavalry": {
+        "numerical_advantage_multiplier": 4
+      }
+    }
+  },
+  "travel": {
+    "code_location": "src/cataphract/domain/movement.py",
+    "road": {
+      "speed_normal_miles_per_day": 12,
+      "speed_forced_miles_per_day": 18,
+      "days_per_week_normal": 5,
+      "days_per_week_forced": 7,
+      "weekly_total_normal": 60,
+      "weekly_total_forced": 120
+    },
+    "offroad": {
+      "speed_normal_miles_per_day": 6,
+      "speed_forced_miles_per_day": 9,
+      "days_per_week_normal": 5,
+      "days_per_week_forced": 7,
+      "wagons_allowed": false
+    },
+    "night_march": {
+      "speed_normal_miles_per_night": 6,
+      "speed_forced_miles_per_night": 12,
+      "fork_wrong_path_chance": "2-in-6",
+      "morale_check_required": true,
+      "offroad_allowed": false
+    },
+    "all_cavalry_forced_march": {
+      "speed_miles_per_day": 36
+    },
+    "forced_march": {
+      "morale_loss": 1,
+      "morale_loss_frequency": "per cumulative week"
+    },
+    "column": {
+      "miles_per_5000_infantry": 1,
+      "miles_per_5000_noncombatants": 1,
+      "miles_per_2000_cavalry": 1,
+      "miles_per_50_wagons": 1,
+      "long_column_threshold_miles": 6,
+      "long_column_speed_normal_miles_per_day": 6,
+      "long_column_speed_forced_miles_per_day": 12,
+      "long_column_weekly_total_normal": 30,
+      "long_column_weekly_total_forced": 72
+    },
+    "river_fording": {
+      "infantry_days_per_column_mile": 0.5,
+      "cavalry_delay": false,
+      "wagons_allowed": false
+    }
+  },
+  "scouting": {
+    "code_location": "src/cataphract/domain/rules_config.py (VisibilityRules)",
+    "base_range_hexes": 1,
+    "cavalry_range_hexes": 2,
+    "bad_weather_modifier": -1,
+    "very_bad_weather_modifier": -2
+  },
+  "morale": {
+    "code_location": "src/cataphract/domain/morale.py",
+    "default_resting": 9,
+    "maximum": 12,
+    "check": {
+      "dice": "2d6",
+      "success": "result <= morale"
+    },
+    "failure_table": {
+      "2": {
+        "name": "Mutiny",
+        "effect": "19-in-20 chance each detachment joins new commander"
+      },
+      "3": {
+        "name": "Mass desertion",
+        "effect": "Reduce army size and supplies by 30%"
+      },
+      "4": {
+        "name": "Multiple defections",
+        "effect": "1d6 random detachments defect to another army"
+      },
+      "5": {
+        "name": "Major desertion",
+        "effect": "Reduce army size and supplies by 20%"
+      },
+      "6": {
+        "name": "Army splits",
+        "effect": "Army splits in half, 3-in-6 chance each detachment joins new commander"
+      },
+      "7": {
+        "name": "Defection",
+        "effect": "Random detachment defects to another army"
+      },
+      "8": {
+        "name": "Desertion",
+        "effect": "Reduce army size and supplies by 10%"
+      },
+      "9": {
+        "name": "Multiple detachments depart",
+        "effect": "1d6 random detachments depart for 2d6 days then return"
+      },
+      "10": {
+        "name": "Camp followers",
+        "effect": "Army picks up extra 5% noncombatants"
+      },
+      "11": {
+        "name": "Detachment departs",
+        "effect": "Random detachment departs for 2d6 days then return"
+      },
+      "12": {
+        "name": "No consequences",
+        "effect": "None"
+      }
+    }
+  },
+  "battle": {
+    "code_location": "src/cataphract/domain/battle.py",
+    "roll": "2d6",
+    "modifiers_positive": {
+      "numerical_advantage": {
+        "value": 1,
+        "per": "100% more total soldiers",
+        "cavalry_multiplier": 2
+      },
+      "morale_advantage": {
+        "value": 1,
+        "per": "point of morale difference"
+      },
+      "chosen_battlefield": 1,
+      "surprise": 1,
+      "advantageous_terrain": 1,
+      "tactics_min": 0,
+      "tactics_max": 3
+    },
+    "modifiers_negative": {
+      "rough_terrain": -1,
+      "undersupplied": -1,
+      "sick_or_exhausted": -1,
+      "bad_weather": -1,
+      "out_of_formation": -2,
+      "tactics_min": 0,
+      "tactics_max": -3
+    },
+    "results": {
+      "0": {
+        "victor": "defender",
+        "victor_casualties_percent": 5,
+        "loser_casualties_percent": 5,
+        "loser_morale_change": 0,
+        "victor_morale_change": 0,
+        "attacker_morale_loss": 1
+      },
+      "1": {
+        "victor_casualties_percent": 10,
+        "loser_casualties_percent": 10,
+        "loser_morale_change": -1,
+        "victor_morale_change": 0
+      },
+      "2-3": {
+        "victor_casualties_percent": 5,
+        "loser_casualties_percent": 10,
+        "loser_morale_change": -2,
+        "victor_morale_change": 1
+      },
+      "4-5": {
+        "victor_casualties_percent": 5,
+        "loser_casualties_percent": 15,
+        "loser_morale_change": -2,
+        "victor_morale_change": 2,
+        "loser_commander_captured_chance": "1-in-6"
+      },
+      "6+": {
+        "victor_casualties_percent": 5,
+        "loser_casualties_percent": 20,
+        "loser_morale_change": -2,
+        "victor_morale_change": 2,
+        "loser_commander_captured_chance": "2-in-6"
+      }
+    },
+    "rout": {
+      "retreat_hexes": 1,
+      "morale_check_required": true,
+      "morale_failure_effects": {
+        "supply_loss_dice": "1d6",
+        "supply_loss_multiplier": 0.10,
+        "additional_retreat_dice": "1d6",
+        "additional_retreat_unit": "hexes",
+        "out_of_control": true
+      },
+      "impossible_retreat": {
+        "size_reduction_percent": 50,
+        "supplies_reduction_percent": 50,
+        "out_of_control_days_dice": "1d6",
+        "stays_in_place": true
+      }
+    },
+    "multi_army": {
+      "calculate_numerical_advantage": "combined per side",
+      "individual_bonuses": ["morale", "tactics", "commander_traits"],
+      "winner": "side with highest single roll",
+      "compare_results": "each army vs highest enemy roll"
+    }
+  },
+  "strongholds": {
+    "code_location": "src/cataphract/domain/models.py",
+    "garrison": {
+      "fortified_town": {
+        "infantry": 250,
+        "cavalry": 0
+      },
+      "city": {
+        "infantry": 500,
+        "cavalry": 0
+      },
+      "fortress": {
+        "infantry": 250,
+        "cavalry": 50
+      }
+    }
+  },
+  "sieges": {
+    "code_location": "src/cataphract/domain/siege.py",
+    "assault": {
+      "attacker_modifier": -1,
+      "defender_bonus": {
+        "town": 3,
+        "city": 4,
+        "fortress": 5,
+        "gates_open": 0
+      },
+      "additional_loser_casualties_percent": 10,
+      "cavalry_counts_double": false
+    },
+    "threshold": {
+      "default": {
+        "town": 10,
+        "city": 15,
+        "fortress": 20
+      },
+      "check": {
+        "frequency": "weekly",
+        "dice": "2d6",
+        "gates_open_condition": "result > threshold"
+      },
+      "modifiers_per_week": {
+        "default": -1,
+        "disease": -1,
+        "resupply": 2,
+        "siegers_attacked": 1
+      }
+    },
+    "siege_engines": {
+      "engines_per_detachment": 10,
+      "construction_duration_days": 30,
+      "defense_reduction_per_week": 1,
+      "deconstruction_duration_days": 7,
+      "reconstruction_duration_days": 7,
+      "wagon_transport": "requires empty wagons"
+    },
+    "capture": {
+      "pillage": {
+        "loot_reduction_percent": 50,
+        "supplies_reduction_percent": 50,
+        "morale_gain": 2,
+        "commanders_escape_chance": "3-in-6"
+      },
+      "no_pillage": {
+        "morale_check_required": true,
+        "commanders_escape_chance": "3-in-6"
+      },
+      "noncombatant_gain": {
+        "fortress": 0.05,
+        "town": 0.10,
+        "city": 0.15
+      },
+      "supplies": {
+        "town": {
+          "dice": "1d6",
+          "modifier": "-X weeks sieged",
+          "multiplier": 10000
+        },
+        "fortress": {
+          "dice": "1d6",
+          "modifier": "-X weeks sieged",
+          "multiplier": 1000
+        },
+        "city": {
+          "dice": "1d6",
+          "modifier": "-X weeks sieged",
+          "multiplier": 100000
+        }
+      }
+    }
+  },
+  "harrying": {
+    "code_location": "src/cataphract/domain/harrying.py",
+    "range": "within scouting range",
+    "duration_days": 1,
+    "base_success_chance": "2-in-6",
+    "objectives": {
+      "killing_soldiers": {
+        "effect": "reduce enemy by 20% of harrying detachment numbers"
+      },
+      "torching_supplies": {
+        "effect_dice": "2d6",
+        "effect_multiplier": "harrying detachment numbers"
+      },
+      "stealing_loot_or_supplies": {
+        "effect_dice": "1d6",
+        "effect_multiplier": "harrying detachment numbers"
+      }
+    },
+    "failure": {
+      "casualties_percent": 20,
+      "objective_accomplished": false
+    },
+    "modifiers": {
+      "skirmishers": 1,
+      "cavalry": 2
+    },
+    "effects_on_harried_army": {
+      "movement_speed_multiplier": 0.5,
+      "can_rest": false
+    },
+    "cannot_harry_garrisoned": true
+  },
+  "loot": {
+    "code_location": "src/cataphract/domain/models.py",
+    "carried_like_supplies": true,
+    "default_amounts": {
+      "town": {
+        "dice": "1d6",
+        "multiplier": 10000
+      },
+      "city": {
+        "dice": "1d6",
+        "multiplier": 100000
+      },
+      "castle": "varies"
+    },
+    "mercenaries": {
+      "cost_per_infantry_per_day": 1,
+      "cost_per_cavalry_per_day": 3,
+      "recruited_as": "whole companies with commander"
+    },
+    "morale_gift": {
+      "loot_per_soldier": 1,
+      "morale_gain": 1,
+      "minimum_threshold": "must give 1 per soldier"
+    }
+  },
+  "operations": {
+    "code_location": "src/cataphract/domain/operations.py",
+    "base_cost_loot": 100,
+    "difficulty_cost": "varies",
+    "success_roll": "2d6",
+    "success_probability": "varies by operation type",
+    "examples": {
+      "intelligence_gathering": "high likelihood",
+      "assassination": "low likelihood"
+    }
+  },
+  "naval": {
+    "code_location": "src/cataphract/domain/naval.py",
+    "ship_capacity": {
+      "soldiers": 100,
+      "cavalry": 20,
+      "supplies": 10000,
+      "siege_equipment": "full detachment"
+    },
+    "embark_disembark": {
+      "duration_days": 1,
+      "coastal_hex_capacity": 100,
+      "river_hex_capacity_per_side": 50
+    },
+    "cost_per_ship_per_day": 100,
+    "speed": {
+      "sea_miles_per_hour": 12,
+      "downriver_miles_per_hour": 12,
+      "upriver_miles_per_hour": 6,
+      "rowing_bonus_miles_per_hour": 6,
+      "rowing_is_forced_march": true
+    },
+    "morale": {
+      "default": 9,
+      "failure_effect": "eject passengers on nearest land",
+      "failure_duration_dice": "3d6",
+      "failure_duration_unit": "days",
+      "never_returns_condition": "doubles on dice"
+    },
+    "battle": {
+      "follows_army_rules": true,
+      "warships_with_siege_equipment_multiplier": 4,
+      "casualties_include_passengers": true
+    }
+  },
+  "rest": {
+    "code_location": "src/cataphract/domain/orders.py",
+    "morale_recovery_per_week": 1,
+    "morale_recovery_direction": "toward resting morale",
+    "town_or_city_benefits": {
+      "loot_deposit": true,
+      "noncombatant_reduction_percent_per_week": 5,
+      "noncombatant_target": 0.25
+    },
+    "early_end_penalty": {
+      "morale_loss": 2
+    },
+    "end_morale_check_required": true
+  },
+  "commander_traits": {
+    "code_location": "src/cataphract/domain/models.py",
+    "1_beloved": {
+      "name": "Beloved",
+      "effect": "Army gains +1 resting morale"
+    },
+    "2_brutal": {
+      "name": "Brutal",
+      "effect": "Strongholds besieged lower threshold by extra -1/week"
+    },
+    "3_commando": {
+      "name": "Commando",
+      "effect": "Designate one detachment as skirmishers"
+    },
+    "4_crusader": {
+      "name": "Crusader",
+      "effect": "+1 bonus in battles against heretics and infidels"
+    },
+    "5_defensive_engineer": {
+      "name": "Defensive Engineer",
+      "effect": "When defending stronghold in assault, add +2 to garrison defensive bonus"
+    },
+    "6_duelist": {
+      "name": "Duelist",
+      "effect": "Count as 10 years younger in single combat, win ties"
+    },
+    "7_guardian": {
+      "name": "Guardian",
+      "effect": "Army suffers 5% fewer casualties in battle, -1-in-6 chance to be captured"
+    },
+    "8_honorable": {
+      "name": "Honorable",
+      "effect": "Army never pillages unless ordered, -1-in-6 revolt chance when foraging/torching/raising armies"
+    },
+    "9_ironsides": {
+      "name": "Ironsides",
+      "effect": "When defending stronghold in siege, add +5 to threshold"
+    },
+    "10_logistician": {
+      "name": "Logistician",
+      "effect": "Army can carry 20% more supplies, stretches half as long on road"
+    },
+    "11_outrider": {
+      "name": "Outrider",
+      "effect": "With cavalry detachment, scouting and foraging range expands to 3 hexes"
+    },
+    "12_poet": {
+      "name": "Poet",
+      "effect": "Morale rolls count as 2 higher for failed morale consequences"
+    },
+    "13_raider": {
+      "name": "Raider",
+      "effect": "20% extra loot in captured strongholds, 10% extra supplies foraged"
+    },
+    "14_ranger": {
+      "name": "Ranger",
+      "effect": "Bad weather does not reduce scouting ranges"
+    },
+    "15_scholar": {
+      "name": "Scholar",
+      "effect": "Can memorize spells like wizard"
+    },
+    "16_siege_engineer": {
+      "name": "Siege Engineer",
+      "effect": "Construct detachment of 10 siege engines in 1 week"
+    },
+    "17_spartan": {
+      "name": "Spartan",
+      "effect": "Army has half as many noncombatants, acquire half as many new noncombatants"
+    },
+    "18_stubborn": {
+      "name": "Stubborn",
+      "effect": "Army does not lose morale on defeat in battle"
+    },
+    "19_vanquisher": {
+      "name": "Vanquisher",
+      "effect": "Deal extra 5% casualties in battle, +1-in-6 chance to capture enemy commanders"
+    },
+    "20_veteran": {
+      "name": "Veteran",
+      "effect": "Army never routs upon defeat in battle"
+    }
+  },
+  "messages": {
+    "code_location": "src/cataphract/domain/messaging.py",
+    "friendly_neutral_territory": {
+      "speed_miles_per_day": 48,
+      "safe_delivery_chance": "19-in-20"
+    },
+    "hostile_territory": {
+      "speed_miles_per_day": 36,
+      "safe_delivery_chance": "5-in-6"
+    },
+    "news_travel": {
+      "overland_miles_per_day": 12,
+      "coastal_miles_per_day": 60
+    }
+  },
+  "magic": {
+    "code_location": "src/cataphract/domain/models.py",
+    "wizards": {
+      "counts_as": "infantry",
+      "memorization_duration_weeks_min": 1,
+      "memorization_duration_weeks_max": 4,
+      "transport_space_supplies": 1000,
+      "unattended_independence_chance": "1-in-6 per week",
+      "independent_traits": ["Scholar", "random"]
+    }
+  },
+  "single_combat": {
+    "code_location": "src/cataphract/domain/models.py",
+    "roll": "1d100",
+    "success_condition": "result > age",
+    "both_succeed_or_fail": "more experienced wins",
+    "death_dismemberment_roll": "on failure"
+  },
+  "new_commanders": {
+    "code_location": "src/cataphract/domain/models.py",
+    "relationship_roll": "1d20",
+    "relationships": {
+      "1": {
+        "name": "Child",
+        "age_formula": "14 + 3d6"
+      },
+      "2": {
+        "name": "Sibling",
+        "age_formula": "20 + 2d20"
+      },
+      "3": {
+        "name": "Parent",
+        "age_formula": "30 + 3d20"
+      },
+      "4": {
+        "name": "Niece or Nephew",
+        "age_formula": "16 + 1d20"
+      },
+      "5": {
+        "name": "Aunt or Uncle",
+        "age_formula": "30 + 3d20"
+      },
+      "6": {
+        "name": "Cousin",
+        "age_formula": "20 + 2d20"
+      },
+      "7": {
+        "name": "Step-[1d6]",
+        "age_formula": "varies"
+      },
+      "8": {
+        "name": "[1d6]-in-Law",
+        "age_formula": "varies"
+      },
+      "9": {
+        "name": "Spouse",
+        "age_formula": "20 + 2d20"
+      },
+      "10": {
+        "name": "Friend",
+        "age_formula": "20 + 2d20"
+      },
+      "11": {
+        "name": "Rival",
+        "age_formula": "20 + 2d20"
+      },
+      "12": {
+        "name": "Student",
+        "age_formula": "16 + 1d20"
+      },
+      "13": {
+        "name": "Teacher",
+        "age_formula": "30 + 3d20"
+      },
+      "14": {
+        "name": "Priest",
+        "age_formula": "20 + 3d20"
+      },
+      "15": {
+        "name": "Councilor",
+        "age_formula": "20 + 3d20"
+      },
+      "16": {
+        "name": "Bodyguard",
+        "age_formula": "20 + 1d20"
+      },
+      "17": {
+        "name": "Quartermaster",
+        "age_formula": "20 + 2d20"
+      },
+      "18": {
+        "name": "Creditor",
+        "age_formula": "20 + 2d20"
+      },
+      "19": {
+        "name": "Favorite",
+        "age_formula": "16 + 2d20"
+      },
+      "20": {
+        "name": "Stranger",
+        "age_formula": "14 + 3d20"
+      }
+    },
+    "trait_gain": {
+      "frequency": "per decade after 20",
+      "type": "random commander trait"
+    }
+  }
+}

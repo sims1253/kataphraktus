@@ -1,245 +1,192 @@
-"""Morale domain logic for Cataphract.
+"""Morale rules for Cataphract armies."""
 
-This module contains pure functions for morale calculations and checks.
-"""
+from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from enum import Enum
-from typing import Any
 
-from cataphract.models.army import Army
-from cataphract.models.commander import Trait
+from cataphract.domain.models import Army, Trait
 from cataphract.utils.rng import check_success, random_choice, roll_dice
 
 
 class MoraleConsequence(Enum):
-    """Morale failure consequences per rules."""
-
-    MUTINY = 2  # 19/20 detachments defect
-    MASS_DESERTION = 3  # 30% loss
-    DETACHMENTS_DEFECT = 4  # 1d6 detachments defect
-    MAJOR_DESERTION = 5  # 20% loss
-    ARMY_SPLITS = 6  # 3/6 detachments to new commander
+    MUTINY = 2
+    MASS_DESERTION = 3
+    DETACHMENTS_DEFECT = 4
+    MAJOR_DESERTION = 5
+    ARMY_SPLITS = 6
     RANDOM_DETACHMENT_DEFECTS = 7
-    DESERTION = 8  # 10% loss
-    DETACHMENTS_DEPART = 9  # 1d6 detachments depart 2d6 days
-    CAMP_FOLLOWERS = 10  # +5% noncombatants
-    DETACHMENT_DEPARTS = 11  # 1 detachment departs 2d6 days
+    DESERTION = 8
+    DETACHMENTS_DEPART = 9
+    CAMP_FOLLOWERS = 10
+    DETACHMENT_DEPARTS = 11
     NO_CONSEQUENCES = 12
 
 
 def roll_morale_check(morale: int, seed: str) -> tuple[bool, int]:
-    """Roll 2d6 morale check: success if <= morale.
+    """Roll 2d6 morale check: success if <= morale."""
 
-    Args:
-        morale: Current morale (2-12)
-        seed: Deterministic seed for RNG
-
-    Returns:
-        (success: bool, roll: int)
-    """
     result = roll_dice(seed, "2d6")
-    roll_value = result["total"]
-    success = roll_value <= morale
-    return success, roll_value
+    total = result["total"]
+    return total <= morale, total
 
 
-def apply_morale_consequence(  # noqa: PLR0912, PLR0915
-    army: Army, roll: int, traits: list[Trait], seed: str, current_day: int = 0
-) -> dict[str, Any]:
-    """Apply morale failure consequence based on roll.
+def adjust_morale(army: Army, change: int, *, max_morale: int = 12) -> None:
+    """Adjust an army's morale within the provided bounds."""
 
-    Modifies army in place. Poet trait adds +2 to roll for less severe consequences.
+    army.morale_current = max(2, min(max_morale, army.morale_current + change))
 
-    Args:
-        army: The army failing morale
-        roll: The 2d6 roll result
-        traits: Commander traits
-        seed: Deterministic seed for RNG
-        current_day: Current game day (for departure tracking)
 
-    Returns:
-        Dict with consequence details
-    """
-    # Poet trait: +2 to roll for consequence determination
+Handler = Callable[[Army, list[Trait], str, int], dict[str, object]]
+
+
+def apply_morale_consequence(
+    army: Army,
+    roll: int,
+    traits: Iterable[Trait],
+    *,
+    seed: str,
+    current_day: int = 0,
+) -> dict[str, object]:
+    """Apply morale failure consequences to an army."""
+
+    traits = list(traits)
     has_poet = any(getattr(t, "name", "").lower() == "poet" for t in traits)
-    effective_roll_raw = roll + 2 if has_poet else roll
-    effective_roll = max(2, min(12, effective_roll_raw))
-
+    effective_roll = max(2, min(12, roll + (2 if has_poet else 0)))
     consequence = MoraleConsequence(effective_roll)
+    details: dict[str, object] = {"consequence_type": consequence.name, "roll": roll}
 
-    details = {"consequence_type": consequence.name, "roll": roll}
-
-    match consequence:
-        case MoraleConsequence.MUTINY:
-            # 19/20 chance each detachment defects
-            defect_chance = 19 / 20
-            defecting = []
-            for i, det in enumerate(army.detachments):
-                check_result = check_success(f"{seed}:mutiny_det_{i}", defect_chance, "1d20")
-                if check_result["success"]:
-                    defecting.append(det)
-                    det.army_id = None  # Mark as defected (service handles reassignment)
-            details["defecting_detachments"] = len(defecting)
-
-        case MoraleConsequence.MASS_DESERTION:
-            loss_pct = 0.30
-            # Reduce soldiers proportionally across detachments
-            for det in army.detachments:
-                det.soldier_count = max(1, int(det.soldier_count * (1 - loss_pct)))
-            army.supplies_current = int(army.supplies_current * (1 - loss_pct))
-            details["loss_percentage"] = loss_pct
-
-        case MoraleConsequence.DETACHMENTS_DEFECT:
-            # 1d6 random detachments defect to another army
-            num_defecting = roll_dice(f"{seed}:defect_count", "1d6")["total"]
-            # Leave at least 1 detachment
-            num_defecting = min(num_defecting, max(0, len(army.detachments) - 1))
-            if num_defecting > 0:
-                # Select random detachments
-                choice_result = random_choice(
-                    f"{seed}:defect_selection", list(range(len(army.detachments)))
-                )
-                selected_indices = [choice_result["index"]]
-                # Get remaining indices for additional selections
-                for i in range(1, num_defecting):
-                    remaining = [
-                        j for j in range(len(army.detachments)) if j not in selected_indices
-                    ]
-                    if remaining:
-                        choice_result = random_choice(f"{seed}:defect_selection_{i}", remaining)
-                        selected_indices.append(choice_result["index"])
-
-                defecting = [army.detachments[idx] for idx in selected_indices]
-                for det in defecting:
-                    det.army_id = None  # Mark as defected
-                details["defecting_detachments"] = len(defecting)
-
-        case MoraleConsequence.MAJOR_DESERTION:
-            loss_pct = 0.20
-            # Reduce soldiers proportionally across detachments
-            for det in army.detachments:
-                det.soldier_count = max(1, int(det.soldier_count * (1 - loss_pct)))
-            army.supplies_current = int(army.supplies_current * (1 - loss_pct))
-            details["loss_percentage"] = loss_pct
-
-        case MoraleConsequence.ARMY_SPLITS:
-            # 3-in-6 chance each detachment joins a new commander
-            split_chance = 3 / 6
-            splitting = []
-            for i, det in enumerate(army.detachments):
-                check_result = check_success(f"{seed}:split_det_{i}", split_chance, "1d6")
-                if check_result["success"]:
-                    splitting.append(det)
-
-            # Leave at least one detachment
-            if len(splitting) >= len(army.detachments):
-                splitting = splitting[:-1]
-
-            for det in splitting:
-                det.army_id = None  # Mark as splitting off
-            details["splitting_detachments"] = len(splitting)
-
-        case MoraleConsequence.RANDOM_DETACHMENT_DEFECTS:
-            # One random detachment defects
-            if len(army.detachments) > 1:
-                choice_result = random_choice(
-                    f"{seed}:single_defect", list(range(len(army.detachments)))
-                )
-                defecting_det = army.detachments[choice_result["index"]]
-                defecting_det.army_id = None
-                details["defecting_detachments"] = 1
-            else:
-                details["defecting_detachments"] = 0
-
-        case MoraleConsequence.DESERTION:
-            loss_pct = 0.10
-            # Reduce soldiers proportionally across detachments
-            for det in army.detachments:
-                det.soldier_count = max(1, int(det.soldier_count * (1 - loss_pct)))
-            army.supplies_current = int(army.supplies_current * (1 - loss_pct))
-            details["loss_percentage"] = loss_pct
-
-        case MoraleConsequence.DETACHMENTS_DEPART:
-            # 1d6 detachments depart for 2d6 days
-            num_departing = roll_dice(f"{seed}:depart_count", "1d6")["total"]
-            days_gone = roll_dice(f"{seed}:depart_days", "2d6")["total"]
-            # Leave at least 1 detachment
-            num_departing = min(num_departing, max(0, len(army.detachments) - 1))
-
-            if num_departing > 0:
-                # Select random detachments
-                choice_result = random_choice(
-                    f"{seed}:depart_selection", list(range(len(army.detachments)))
-                )
-                selected_indices = [choice_result["index"]]
-                # Get remaining indices for additional selections
-                for i in range(1, num_departing):
-                    remaining = [
-                        j for j in range(len(army.detachments)) if j not in selected_indices
-                    ]
-                    if remaining:
-                        choice_result = random_choice(f"{seed}:depart_selection_{i}", remaining)
-                        selected_indices.append(choice_result["index"])
-
-                departing = [army.detachments[idx] for idx in selected_indices]
-
-                # Store in army.status_effects
-                if army.status_effects is None:
-                    army.status_effects = {}
-                army.status_effects["departed_detachments"] = {  # type: ignore[index]
-                    "detachment_ids": [det.id for det in departing],
-                    "return_day": current_day + days_gone,
-                }
-                details["departing_detachments"] = num_departing
-                details["return_in_days"] = days_gone
-
-        case MoraleConsequence.CAMP_FOLLOWERS:
-            # +5% noncombatants
-            increase = int(army.noncombatant_count * 0.05)
-            army.noncombatant_count = army.noncombatant_count + increase
-            details["noncombatant_increase"] = increase
-
-        case MoraleConsequence.DETACHMENT_DEPARTS:
-            # 1 detachment departs for 2d6 days
-            days_gone = roll_dice(f"{seed}:single_depart_days", "2d6")["total"]
-
-            if len(army.detachments) > 1:
-                # Select random detachment
-                choice_result = random_choice(
-                    f"{seed}:single_depart_selection", list(range(len(army.detachments)))
-                )
-                departing_det = army.detachments[choice_result["index"]]
-
-                # Store in army.status_effects
-                if army.status_effects is None:
-                    army.status_effects = {}
-                army.status_effects["departed_detachments"] = {  # type: ignore[index]
-                    "detachment_ids": [departing_det.id],
-                    "return_day": current_day + days_gone,
-                }
-                details["departing_detachments"] = 1
-                details["return_in_days"] = days_gone
-            else:
-                details["departing_detachments"] = 0
-
-        case MoraleConsequence.NO_CONSEQUENCES:
-            pass
-
-        case _:
-            # Default handling for unhandled (should not occur)
-            details["unhandled"] = True
-
-    # Veteran: Never routs
-    has_veteran = any(getattr(t, "name", "").lower() == "veteran" for t in traits)
-    if has_veteran and consequence in [MoraleConsequence.ARMY_SPLITS, MoraleConsequence.MUTINY]:
-        details["veteran_prevented_rout"] = True
-        # Prevent full rout
-
+    handler = _MORALE_HANDLERS.get(consequence)
+    if handler is not None:
+        details.update(handler(army, traits, seed, current_day))
     return details
 
 
-def adjust_morale(army: Army, change: int, max_morale: int = 12) -> None:
-    """Adjust army morale by change amount, capped at max."""
-    army.morale_current = max(
-        2, min(max_morale, army.morale_current + change)
-    )  # Min 2 to avoid immediate failure
+def _apply_percentage_loss(army: Army, percentage: float) -> None:
+    for det in army.detachments:
+        remaining = max(1, int(det.soldiers * (1 - percentage)))
+        det.soldiers = remaining
+    army.supplies_current = int(army.supplies_current * (1 - percentage))
+
+
+def _select_detachments(army: Army, count: int, seed: str) -> list:
+    if count <= 0 or not army.detachments:
+        return []
+    indices = list(range(len(army.detachments)))
+    selected = []
+    for i in range(min(count, len(indices))):
+        choice = random_choice(f"{seed}:select:{i}", indices)
+        idx = choice["index"]
+        selected.append(army.detachments[idx])
+        indices.remove(idx)
+    return selected
+
+
+def _handle_mutiny(army: Army, _traits: list[Trait], seed: str, _day: int) -> dict[str, object]:
+    losses = []
+    for index, det in enumerate(army.detachments):
+        chance = check_success(f"{seed}:mutiny:{index}", 19 / 20, "1d20")
+        if chance["success"]:
+            losses.append(det)
+    return {"defecting_detachments": len(losses)}
+
+
+def _handle_mass_desertion(
+    army: Army, _traits: list[Trait], _seed: str, _day: int
+) -> dict[str, object]:
+    _apply_percentage_loss(army, 0.30)
+    return {"loss_percentage": 0.30}
+
+
+def _handle_detachments_defect(
+    army: Army, _traits: list[Trait], seed: str, _day: int
+) -> dict[str, object]:
+    num = roll_dice(f"{seed}:defect-count", "1d6")["total"]
+    num = min(num, max(0, len(army.detachments) - 1))
+    selected = _select_detachments(army, num, seed)
+    return {"defecting_detachments": len(selected)}
+
+
+def _handle_major_desertion(
+    army: Army, _traits: list[Trait], _seed: str, _day: int
+) -> dict[str, object]:
+    _apply_percentage_loss(army, 0.20)
+    return {"loss_percentage": 0.20}
+
+
+def _handle_army_splits(
+    army: Army, _traits: list[Trait], seed: str, _day: int
+) -> dict[str, object]:
+    splitting = []
+    for index, det in enumerate(army.detachments):
+        chance = check_success(f"{seed}:split:{index}", 0.5, "1d6")
+        if chance["success"]:
+            splitting.append(det)
+    if len(splitting) >= len(army.detachments):
+        splitting = splitting[:-1]
+    return {"splitting_detachments": len(splitting)}
+
+
+def _handle_random_defect(
+    army: Army, _traits: list[Trait], seed: str, _day: int
+) -> dict[str, object]:
+    selected = _select_detachments(army, 1, seed)
+    return {"defecting_detachments": len(selected)}
+
+
+def _handle_desertion(army: Army, _traits: list[Trait], _seed: str, _day: int) -> dict[str, object]:
+    _apply_percentage_loss(army, 0.10)
+    return {"loss_percentage": 0.10}
+
+
+def _handle_detachments_depart(
+    army: Army, _traits: list[Trait], seed: str, current_day: int
+) -> dict[str, object]:
+    num = roll_dice(f"{seed}:depart-count", "1d6")["total"]
+    days = roll_dice(f"{seed}:depart-days", "2d6")["total"]
+    num = min(num, max(0, len(army.detachments) - 1))
+    selected = _select_detachments(army, num, seed)
+    if selected:
+        army.status_effects = army.status_effects or {}
+        army.status_effects["departed_detachments"] = {
+            "detachment_ids": [det.id for det in selected],
+            "return_day": current_day + days,
+        }
+    return {"departing_detachments": len(selected), "return_in_days": days}
+
+
+def _handle_camp_followers(
+    army: Army, _traits: list[Trait], _seed: str, _day: int
+) -> dict[str, object]:
+    increase = int(army.noncombatant_count * 0.05)
+    army.noncombatant_count += increase
+    return {"noncombatant_increase": increase}
+
+
+def _handle_detachment_departs(
+    army: Army, _traits: list[Trait], seed: str, current_day: int
+) -> dict[str, object]:
+    selected = _select_detachments(army, 1, seed)
+    if not selected:
+        return {"departing_detachments": 0}
+    days = roll_dice(f"{seed}:single-depart-days", "2d6")["total"]
+    army.status_effects = army.status_effects or {}
+    army.status_effects["departed_detachments"] = {
+        "detachment_ids": [selected[0].id],
+        "return_day": current_day + days,
+    }
+    return {"departing_detachments": 1, "return_in_days": days}
+
+
+_MORALE_HANDLERS: dict[MoraleConsequence, Handler] = {
+    MoraleConsequence.MUTINY: _handle_mutiny,
+    MoraleConsequence.MASS_DESERTION: _handle_mass_desertion,
+    MoraleConsequence.DETACHMENTS_DEFECT: _handle_detachments_defect,
+    MoraleConsequence.MAJOR_DESERTION: _handle_major_desertion,
+    MoraleConsequence.ARMY_SPLITS: _handle_army_splits,
+    MoraleConsequence.RANDOM_DETACHMENT_DEFECTS: _handle_random_defect,
+    MoraleConsequence.DESERTION: _handle_desertion,
+    MoraleConsequence.DETACHMENTS_DEPART: _handle_detachments_depart,
+    MoraleConsequence.CAMP_FOLLOWERS: _handle_camp_followers,
+    MoraleConsequence.DETACHMENT_DEPARTS: _handle_detachment_departs,
+}
