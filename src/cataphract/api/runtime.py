@@ -11,13 +11,13 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from cataphract import savegame
 from cataphract.config import Settings, get_settings
 from cataphract.domain import models as dm
 from cataphract.domain.enums import DayPart, OrderStatus, Season
 from cataphract.domain.rules_config import DEFAULT_RULES, RulesConfig
 from cataphract.domain.tick import run_daily_tick
 from cataphract.repository import JsonCampaignRepository
-from cataphract import savegame
 
 logger = logging.getLogger(__name__)
 

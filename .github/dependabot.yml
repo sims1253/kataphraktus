@@ -27,3 +27,13 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+
+  # NPM (Frontend)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"

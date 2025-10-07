@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from uuid import UUID
-
-import pytest
 
 from cataphract.domain import enums as de
 from cataphract.domain import models as dm
 from cataphract.savegame import (
+    PlayerRole,
     SaveKind,
-    SaveManifest,
     SaveMetadata,
     SavePlayer,
-    PlayerRole,
     export_campaign,
     import_campaign_from_manifest,
     load_manifest,
@@ -121,4 +118,3 @@ def test_reassign_campaign_identifier():
         assert faction.campaign_id == imported.id
     for hexagon in imported.map.hexes.values():
         assert hexagon.campaign_id == imported.id
-

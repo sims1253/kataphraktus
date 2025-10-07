@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -298,9 +298,7 @@ async def list_scenarios(state: ApiStateDep) -> list[ScenarioSummary]:
         metadata = item.get("metadata", {})
         created_at = metadata.get("created_at")
         created = (
-            datetime.fromisoformat(created_at)
-            if isinstance(created_at, str)
-            else datetime.now()
+            datetime.fromisoformat(created_at) if isinstance(created_at, str) else datetime.now(UTC)
         )
         result.append(
             ScenarioSummary(
@@ -315,7 +313,9 @@ async def list_scenarios(state: ApiStateDep) -> list[ScenarioSummary]:
     return result
 
 
-@router.post("/scenarios/import", response_model=CampaignSummary, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/scenarios/import", response_model=CampaignSummary, status_code=status.HTTP_201_CREATED
+)
 async def import_scenario(
     request: ScenarioImportRequest,
     state: ApiStateDep,

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from enum import StrEnum
 import json
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -145,14 +145,13 @@ def export_campaign(
 ) -> SaveManifest:
     """Produce a manifest from an in-memory campaign."""
 
-    manifest = SaveManifest(
+    return SaveManifest(
         kind=kind,
         metadata=metadata or SaveMetadata(name=campaign.name),
         players=players or [],
         campaign=campaign,
         rules_overrides=rules_overrides,
     )
-    return manifest
 
 
 def _reassign_campaign_id(campaign: dm.Campaign, new_id: dm.CampaignID) -> None:
@@ -166,7 +165,7 @@ def _reassign_campaign_id(campaign: dm.Campaign, new_id: dm.CampaignID) -> None:
     def _swap(mapping: dict, attr: str | None = None) -> None:
         for obj in mapping.values():
             if hasattr(obj, "campaign_id"):
-                setattr(obj, "campaign_id", new_id)
+                obj.campaign_id = new_id
             if attr and hasattr(obj, attr):
                 nested = getattr(obj, attr)
                 if isinstance(nested, dict):
