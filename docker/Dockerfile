@@ -1,5 +1,5 @@
 # Cataphract Game System - API Server Dockerfile
-FROM python:3.14.0-slim
+FROM python:3.14.2-slim
 
 # Set working directory
 WORKDIR /app
